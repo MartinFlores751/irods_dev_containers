@@ -1,0 +1,6 @@
+{
+	"name": "local_irods_dev",
+	"build": {
+		"dockerfile": "Dockerfile"
+	}
+}
