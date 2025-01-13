@@ -212,18 +212,6 @@ RUN --mount=type=bind,target=/build/cppcheck,source=/build/cppcheck,from=cppchec
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     pip3 install codechecker
 
-# Install latest stable clang from repo for static analysis
-# See: https://apt.llvm.org/
-RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add - && \
-    echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" | tee /etc/apt/sources.list.d/renci-irods.list
-
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y \
-        clang-18 \
-        clang-tidy-18
-
 # Add non-root user, taken from the following link:
 # https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user
 ARG USERNAME=dev
