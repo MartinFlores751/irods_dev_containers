@@ -50,53 +50,9 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release -DUSE_MATCHCOMPILER=ON -Wno-dev -G Ninja -B
     cmake --build /build/cppcheck
 
 
-FROM ubuntu:22.04 AS CodeChecker
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Re-enable apt caching for RUN --mount
-RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
-    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
-
-# Make sure we're starting with an up-to-date image
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get upgrade -y && \
-    apt-get autoremove -y --purge
-
-# Install system deps
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get install -y \
-      build-essential \
-      curl \
-      g++ \
-      gnupg \
-      lsb-release \
-      ninja-build \
-      wget
-
-# Get the iRODS package repos
-RUN wget -qO - https://packages.irods.org/irods-signing-key.asc | apt-key add - && \
-    echo "deb [arch=amd64] https://packages.irods.org/apt/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/renci-irods.list && \
-    wget -qO - https://core-dev.irods.org/irods-core-dev-signing-key.asc | apt-key add - && \
-    echo "deb [arch=amd64] https://core-dev.irods.org/apt/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/renci-irods-core-dev.list
-
-# Install the iRDOS packages
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update -y && \
-    apt-get install -y \
-      irods-externals-cmake3.21.4-0 \
-      irods-externals-clang13.0.1-0
-
-ARG CODECHECKER_VERSION=6.24.4
-RUN wget -qO - https://github.com/Ericsson/codechecker/archive/refs/tags/v${CODECHECKER_VERSION}.tar.gz | tar xz
-
-
 FROM ubuntu:22.04
 
-SHELL [ "/bin/bash", "-c" ]
+SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Re-enable apt caching for RUN --mount
@@ -115,81 +71,53 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    --mount=type=cache,target=/root/.cache/wheel,sharing=locked \
     apt-get update && \
     apt-get install -y \
-        apt-transport-https \
-        ccache \
-        cmake \
-        g++ \
-        gcc \
         git \
         gnupg \
-        help2man \
-        libbz2-dev \
-        libcurl4-gnutls-dev \
-        libfuse-dev \
-        libjson-perl \
-        libkrb5-dev \
-        libpam0g-dev \
-        libssl-dev \
-        libxml2-dev \
         lsb-release \
-        lsof \
-        make \
-        ninja-build \
-        odbc-postgresql \
-        postgresql \
-        python3 \
-        python3-dev \
-        python3-pip \
-        python3-distro \
-        python3-jsonschema \
-        python3-packaging \
-        python3-psutil \
-        python3-pyodbc \
-        python3-requests \
-        sudo \
-        super \
-        unixodbc-dev \
         wget \
-        zlib1g-dev \
-        flex \
-        bison \
     && \
-    python3 -m pip install lief && \
     rm -rf /tmp/*
 
 RUN wget -qO - https://packages.irods.org/irods-signing-key.asc | apt-key add - && \
-    echo "deb [arch=amd64] https://packages.irods.org/apt/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/renci-irods.list && \
-    wget -qO - https://core-dev.irods.org/irods-core-dev-signing-key.asc | apt-key add - && \
-    echo "deb [arch=amd64] https://core-dev.irods.org/apt/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/renci-irods-core-dev.list
+    echo "deb [arch=amd64] https://packages.irods.org/apt/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/renci-irods.list
 
+RUN wget -qO - https://core-dev.irods.org/irods-core-dev-signing-key.asc | apt-key add - && \
+    echo "deb [arch=amd64] https://core-dev.irods.org/apt/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/dev-renci-irods.list
+
+ARG irods_version=4.3.2-0~jammy
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y \
-        'irods-externals*' \
+        apt-transport-https \
+        g++-11 \
+        gcc-11 \
+        irods-dev=${irods_version} \
+        irods-runtime=${irods_version} \
+        irods-externals-clang13.0.1-0 \
+        irods-externals-cmake3.21.4-0 \
+        irods-externals-fmt-libcxx8.1.1-1 \
+        irods-externals-json3.10.4-0 \
+        irods-externals-jwt-cpp0.6.99.1-0 \
+        irods-externals-nanodbc-libcxx2.13.0-2 \
+        irods-externals-spdlog-libcxx1.9.2-2 \
+        libcurl4-gnutls-dev \
+        libssl-dev \
+        libssl3 \
+        ninja-build \
     && \
     rm -rf /tmp/*
 
 ARG cmake_path="/opt/irods-externals/cmake3.21.4-0/bin"
 ENV PATH=${cmake_path}:$PATH
-
 ARG clang_path="/opt/irods-externals/clang13.0.1-0/bin"
 ENV PATH=${clang_path}:$PATH
 
-ENV file_extension="deb"
-ENV package_manager="apt-get"
-
-ENV CCACHE_DIR="/irods_build_cache"
-# Default to a reasonably large cache size
-ENV CCACHE_MAXSIZE="64G"
-# Allow for a lot of files (1.5M files, 300 per directory)
-ENV CCACHE_NLEVELS="3"
-# Allow any uid to use cache
-ENV CCACHE_UMASK="000"
+# TODO: This should be a feature
+# Install python-lsp
+# Install yaml-lsp
 
 # -----------------
 # Developer Tooling
@@ -212,15 +140,20 @@ RUN --mount=type=bind,target=/build/cppcheck,source=/build/cppcheck,from=cppchec
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     pip3 install codechecker
 
-# Install latest stable clang from repo for static analysis
-# See: https://apt.llvm.org/
-RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add - && \
-    echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" | tee /etc/apt/sources.list.d/renci-irods.list
+# Add non-root user, taken from the following link:
+# https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user
+ARG USERNAME=dev
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
 
+# Create the user
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    groupadd --gid $USER_GID $USERNAME && \
+    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME && \
     apt-get update && \
-    apt-get install -y \
-        clang-18 \
-        clang-tidy-18
+    apt-get install -y sudo && \
+    echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
+    chmod 0440 /etc/sudoers.d/$USERNAME
 
+USER $USERNAME

@@ -2,5 +2,6 @@
 	"name": "local_http_api_dev",
 	"build": {
 		"dockerfile": "Dockerfile"
-	}
+	},
+	"containerUser": "dev"
 }
