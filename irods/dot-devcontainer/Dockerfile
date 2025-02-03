@@ -208,9 +208,9 @@ RUN --mount=type=bind,target=/build/cppcheck,source=/build/cppcheck,from=cppchec
     --mount=type=bind,target=/cppcheck-${CPPCHECK_VERSION},source=/cppcheck-${CPPCHECK_VERSION},from=cppcheck \
     cmake --install /build/cppcheck
 
-# Install CodeChecker
+# Install CodeChecker and pre-commit
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    pip3 install codechecker
+    pip3 install codechecker pre-commit
 
 # Add non-root user, taken from the following link:
 # https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user
