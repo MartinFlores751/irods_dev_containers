@@ -3,5 +3,6 @@
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
-	"containerUser": "dev"
+	"containerUser": "dev",
+	"postStartCommand": "cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/irods/ -B ~/irods-build/; pre-commit install"
 }
