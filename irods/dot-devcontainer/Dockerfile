@@ -1,6 +1,12 @@
 # syntax=docker/dockerfile:1
 
 ARG CPPCHECK_VERSION=2.16.1
+ARG GNU_STOW_VERSION=2.4.1
+ARG DIFFTASTIC_VERSION=0.62.0
+ARG MERGIRAF_VERSION=0.4.0
+ARG DELTA_VERSION=0.18.2
+
+
 
 FROM ubuntu:22.04 AS cppcheck
 ENV DEBIAN_FRONTEND=noninteractive
@@ -50,6 +56,133 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release -DUSE_MATCHCOMPILER=ON -Wno-dev -G Ninja -B
     cmake --build /build/cppcheck
 
 
+
+
+
+
+FROM ubuntu:22.04 AS mergiraf
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Re-enable apt caching for RUN --mount
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Make sure we're starting with an up-to-date image
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get autoremove -y --purge
+
+# Install system deps
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get install -y \
+      build-essential \
+      wget
+
+# install rustup; build and install mergiraf
+RUN wget -q -O - https://sh.rustup.rs | sh -s -- -y && \
+    . /root/.cargo/env && \
+    cargo install --locked mergiraf
+
+
+
+
+
+
+
+
+# TODO: Simplify gnustow build
+FROM ubuntu:22.04 AS gnustow
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Re-enable apt caching for RUN --mount
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Make sure we're starting with an up-to-date image
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get autoremove -y --purge
+
+# Install system deps
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get install -y \
+      build-essential \
+      binutils \
+      gnupg \
+      lsb-release \
+      wget
+
+# Get the iRODS package repos
+RUN wget -qO - https://packages.irods.org/irods-signing-key.asc | apt-key add - && \
+    echo "deb [arch=amd64] https://packages.irods.org/apt/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/renci-irods.list && \
+    wget -qO - https://core-dev.irods.org/irods-core-dev-signing-key.asc | apt-key add - && \
+    echo "deb [arch=amd64] https://core-dev.irods.org/apt/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/renci-irods-core-dev.list
+
+# Install the iRDOS packages
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update -y && \
+    apt-get install -y \
+      irods-externals-clang13.0.1-0
+
+# Specifiy desired version
+# TODO: gpg --verify stow.tar.gz.sig
+ARG GNU_STOW_VERSION
+RUN wget -q -O stow.tar.gz https://ftp.gnu.org/gnu/stow/stow-${GNU_STOW_VERSION}.tar.gz && \
+    wget -q -O stow.tar.gz.sig https://ftp.gnu.org/gnu/stow/stow-${GNU_STOW_VERSION}.tar.gz.sig && \
+    tar xaf stow.tar.gz
+
+# Run the gnu stow build
+ENV PATH=${PATH}:/opt/irods-externals/cmake3.21.4-0/bin:/opt/irods-externals/clang13.0.1-0/bin
+WORKDIR /stow-${GNU_STOW_VERSION}
+RUN ./configure && \
+    make
+
+
+
+
+
+
+FROM ubuntu:22.04 AS delta
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Re-enable apt caching for RUN --mount
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Make sure we're starting with an up-to-date image
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get upgrade -y && \
+    apt-get autoremove -y --purge
+
+# Install system deps
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get install -y \
+    wget && \
+    mkdir /delta
+
+WORKDIR /delta
+ARG DELTA_VERSION
+RUN wget -q -O delta.deb https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_amd64.deb
+
+
+
+
+
+
+
+
+
+
 FROM ubuntu:22.04 AS CodeChecker
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -94,6 +227,11 @@ ARG CODECHECKER_VERSION=6.24.4
 RUN wget -qO - https://github.com/Ericsson/codechecker/archive/refs/tags/v${CODECHECKER_VERSION}.tar.gz | tar xz
 
 
+
+
+
+
+
 FROM ubuntu:22.04
 
 SHELL [ "/bin/bash", "-c" ]
@@ -127,6 +265,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         git \
         gnupg \
         help2man \
+        libarchive-dev \
         libbz2-dev \
         libcurl4-gnutls-dev \
         libfuse-dev \
@@ -134,6 +273,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libkrb5-dev \
         libpam0g-dev \
         libssl-dev \
+        libsystemd-dev \
         libxml2-dev \
         lsb-release \
         lsof \
@@ -196,6 +336,7 @@ ENV CCACHE_UMASK="000"
 # -----------------
 
 ARG CPPCHECK_VERSION
+ARG GNU_STOW_VERSION
 
 # Install vim
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -207,6 +348,44 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN --mount=type=bind,target=/build/cppcheck,source=/build/cppcheck,from=cppcheck,rw \
     --mount=type=bind,target=/cppcheck-${CPPCHECK_VERSION},source=/cppcheck-${CPPCHECK_VERSION},from=cppcheck \
     cmake --install /build/cppcheck
+
+# Install gnu stow
+# TODO: Verify WORKDIR change is required
+WORKDIR /stow-${GNU_STOW_VERSION}
+RUN --mount=type=bind,target=/stow-${GNU_STOW_VERSION},source=/stow-${GNU_STOW_VERSION},from=gnustow \
+    make install
+WORKDIR /
+
+# Install difftastic and mergiraf
+WORKDIR /usr/bin
+
+ARG DIFFTASTIC_VERSION
+RUN wget -q -O - https://github.com/Wilfred/difftastic/releases/download/${DIFFTASTIC_VERSION}/difft-x86_64-unknown-linux-gnu.tar.gz | tar xz
+
+# TODO: See if there's an easy fix for bad libc6 version
+# ARG MERGIRAF_VERSION
+# RUN wget -q -O - https://codeberg.org/mergiraf/mergiraf/releases/download/v${MERGIRAF_VERSION}/mergiraf_x86_64-unknown-linux-gnu.tar.gz | tar xz
+
+# mergiraf
+COPY --from=mergiraf /root/.cargo/bin/mergiraf /usr/bin/
+
+WORKDIR /
+
+
+# Install delta
+RUN --mount=type=bind,target=/delta,source=/delta,from=delta \
+    dpkg -i /delta/delta.deb
+
+# Install git
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository ppa:git-core/ppa
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y git
 
 # Install CodeChecker and pre-commit
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
