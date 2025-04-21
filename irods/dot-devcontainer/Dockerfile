@@ -44,14 +44,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update -y && \
     apt-get install -y \
       irods-externals-cmake3.21.4-0 \
-      irods-externals-clang13.0.1-0
+      irods-externals-clang16.0.6-0
 
 # Specifiy desired version
 ARG CPPCHECK_VERSION
 RUN wget -qO - https://github.com/danmar/cppcheck/archive/refs/tags/${CPPCHECK_VERSION}.tar.gz | tar xz
 
 # Run the cppcheck build
-ENV PATH=${PATH}:/opt/irods-externals/cmake3.21.4-0/bin:/opt/irods-externals/clang13.0.1-0/bin
+ENV PATH=${PATH}:/opt/irods-externals/cmake3.21.4-0/bin:/opt/irods-externals/clang16.0.6-0/bin
 RUN cmake -DCMAKE_BUILD_TYPE=Release -DUSE_MATCHCOMPILER=ON -Wno-dev -G Ninja -B /build/cppcheck -S /cppcheck-${CPPCHECK_VERSION} && \
     cmake --build /build/cppcheck
 
@@ -129,7 +129,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update -y && \
     apt-get install -y \
-      irods-externals-clang13.0.1-0
+      irods-externals-clang16.0.6-0
 
 # Specifiy desired version
 # TODO: gpg --verify stow.tar.gz.sig
@@ -139,7 +139,7 @@ RUN wget -q -O stow.tar.gz https://ftp.gnu.org/gnu/stow/stow-${GNU_STOW_VERSION}
     tar xaf stow.tar.gz
 
 # Run the gnu stow build
-ENV PATH=${PATH}:/opt/irods-externals/cmake3.21.4-0/bin:/opt/irods-externals/clang13.0.1-0/bin
+ENV PATH=${PATH}:/opt/irods-externals/cmake3.21.4-0/bin:/opt/irods-externals/clang16.0.6-0/bin
 WORKDIR /stow-${GNU_STOW_VERSION}
 RUN ./configure && \
     make
@@ -221,7 +221,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update -y && \
     apt-get install -y \
       irods-externals-cmake3.21.4-0 \
-      irods-externals-clang13.0.1-0
+      irods-externals-clang16.0.6-0
 
 ARG CODECHECKER_VERSION=6.24.4
 RUN wget -qO - https://github.com/Ericsson/codechecker/archive/refs/tags/v${CODECHECKER_VERSION}.tar.gz | tar xz
@@ -317,7 +317,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 ARG cmake_path="/opt/irods-externals/cmake3.21.4-0/bin"
 ENV PATH=${cmake_path}:$PATH
 
-ARG clang_path="/opt/irods-externals/clang13.0.1-0/bin"
+ARG clang_path="/opt/irods-externals/clang16.0.6-0/bin"
 ENV PATH=${clang_path}:$PATH
 
 ENV file_extension="deb"
@@ -406,5 +406,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get install -y sudo && \
     echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME
+
+# Get the latest clang-tidy-diff.py script
+# Use the following command to run it:
+# git diff -U0 main...HEAD | python3 ~/clang-tidy-diff.py -p 1 -config-file /workspaces/irods/.clang-tidy -use-color -path /workspaces/irods/compile_commands.json -quiet -j 4
+RUN wget -q -O /home/dev/clang-tidy-diff.py https://raw.githubusercontent.com/llvm/llvm-project/refs/heads/main/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py
 
 USER $USERNAME
