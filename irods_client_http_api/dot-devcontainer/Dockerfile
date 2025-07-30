@@ -94,12 +94,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         apt-transport-https \
         g++-11 \
         gcc-11 \
+        cmake \
         irods-dev=${irods_version} \
         irods-runtime=${irods_version} \
         irods-externals-clang13.0.1-0 \
-        irods-externals-cmake3.21.4-0 \
         irods-externals-fmt-libcxx8.1.1-1 \
         irods-externals-json3.10.4-0 \
+        irods-externals-jsoncons0.178.0-0 \
         irods-externals-jwt-cpp0.6.99.1-0 \
         irods-externals-nanodbc-libcxx2.13.0-2 \
         irods-externals-spdlog-libcxx1.9.2-2 \
@@ -107,7 +108,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libssl-dev \
         libssl3 \
         ninja-build \
-        python3-jsonschema \
     && \
     rm -rf /tmp/*
 
