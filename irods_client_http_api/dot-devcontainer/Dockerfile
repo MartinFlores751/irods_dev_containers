@@ -107,6 +107,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libssl-dev \
         libssl3 \
         ninja-build \
+        python3-jsonschema \
     && \
     rm -rf /tmp/*
 
@@ -137,8 +138,8 @@ RUN --mount=type=bind,target=/build/cppcheck,source=/build/cppcheck,from=cppchec
     cmake --install /build/cppcheck
 
 # Install CodeChecker
-RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    pip3 install codechecker
+# RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+#     pip3 install codechecker
 
 # Add non-root user, taken from the following link:
 # https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user
@@ -150,7 +151,7 @@ ARG USER_GID=$USER_UID
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     groupadd --gid $USER_GID $USERNAME && \
-    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME && \
+    useradd --uid $USER_UID --gid $USER_GID --shell /bin/bash -m $USERNAME && \
     apt-get update && \
     apt-get install -y sudo && \
     echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
