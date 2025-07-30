@@ -4,7 +4,7 @@
 		"dockerfile": "Dockerfile"
 	},
 	"containerUser": "dev",
-    "postStartCommand": "/opt/irods-externals/cmake3.21.4-0/bin/cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/irods-client-http-api/ -B /home/dev/http-api-build; ln -s /home/dev/http-api-build/compile_commands.json /workspaces/irods-client-http-api/compile_commands.json || exit 0",
+    "postStartCommand": "cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/irods-client-http-api/ -B /home/dev/http-api-build; ln -s /home/dev/http-api-build/compile_commands.json /workspaces/irods-client-http-api/compile_commands.json || exit 0",
 	"customizations": {
 		"vscode": {
 			"extensions": [
