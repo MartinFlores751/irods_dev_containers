@@ -3,8 +3,9 @@
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
+	"mounts": [{"source": "irods-http-api-ccache", "target": "/home/dev/.ccache", "type": "volume"}],
 	"containerUser": "dev",
-    "postStartCommand": "cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/irods-client-http-api/ -B /home/dev/http-api-build; ln -s /home/dev/http-api-build/compile_commands.json /workspaces/irods-client-http-api/compile_commands.json || exit 0",
+    "postStartCommand": "cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache -G Ninja -S /workspaces/irods-client-http-api/ -B /home/dev/http-api-build; ln -s /home/dev/http-api-build/compile_commands.json /workspaces/irods-client-http-api/compile_commands.json || exit 0",
 	"customizations": {
 		"vscode": {
 			"extensions": [

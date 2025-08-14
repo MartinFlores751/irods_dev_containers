@@ -130,7 +130,8 @@ ARG CPPCHECK_VERSION
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
-    apt-get install -y vim
+    apt-get install -y vim \
+        ccache
 
 # Install cppcheck
 RUN --mount=type=bind,target=/build/cppcheck,source=/build/cppcheck,from=cppcheck,rw \
