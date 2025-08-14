@@ -405,7 +405,7 @@ ARG USER_GID=$USER_UID
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     groupadd --gid $USER_GID $USERNAME && \
-    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME && \
+    useradd --uid $USER_UID --gid $USER_GID --shell /bin/bash -m $USERNAME && \
     apt-get update && \
     apt-get install -y sudo && \
     echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
