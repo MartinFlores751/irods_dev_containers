@@ -4,5 +4,15 @@
 		"dockerfile": "Dockerfile"
 	},
 	"containerUser": "dev",
-	"postStartCommand": "cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/irods/ -B ~/irods-build/; pre-commit install"
+	"postStartCommand": "cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/irods/ -B /home/dev/irods-build/; pre-commit install; ln -s /home/dev/irods/compile_commands.json /workspaces/irods-build/compile_commands.json || exit 0",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"llvm-vs-code-extensions.vscode-clangd"
+			],
+			"settings": {
+				"clangd.path": "/opt/irods-externals/clang16.0.6-0/bin/clangd"
+			}
+		}
+	},
 }

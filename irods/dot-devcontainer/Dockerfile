@@ -258,6 +258,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
     apt-get install -y \
         apt-transport-https \
+        catch2 \
         ccache \
         cmake \
         g++ \
@@ -268,10 +269,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libarchive-dev \
         libbz2-dev \
         libcurl4-gnutls-dev \
+        libfmt-dev \
         libfuse-dev \
         libjson-perl \
         libkrb5-dev \
         libpam0g-dev \
+        libspdlog-dev \
         libssl-dev \
         libsystemd-dev \
         libxml2-dev \
@@ -279,6 +282,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         lsof \
         make \
         ninja-build \
+        nlohmann-json3-dev \
         odbc-postgresql \
         postgresql \
         python3 \
