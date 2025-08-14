@@ -1,10 +1,10 @@
 {
 	"name": "local_irods_dev",
-	"build": {
-		"dockerfile": "Dockerfile"
-	},
+	"dockerComposeFile": "compose.yml",
+	"service": "irods",
+	"workspaceFolder": "/workspaces",
 	"containerUser": "dev",
-	"postStartCommand": "cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/irods/ -B /home/dev/irods-build/; pre-commit install; ln -s /home/dev/irods/compile_commands.json /workspaces/irods-build/compile_commands.json || exit 0",
+    "postStartCommand": "cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/irods/ -B /home/dev/irods-build/; cmake -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -G Ninja -S /workspaces/icommands/ -B /home/dev/icommands-build/; pre-commit install; ln -s /home/dev/irods-build/compile_commands.json /workspaces/irods/compile_commands.json; ln -s /home/dev/icommands-build/compile_commands.json /workspaces/icommands/compile_commands.json || exit 0",
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -14,5 +14,5 @@
 				"clangd.path": "/opt/irods-externals/clang16.0.6-0/bin/clangd"
 			}
 		}
-	},
+	}
 }
